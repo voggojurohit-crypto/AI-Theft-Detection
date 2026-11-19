@@ -5,7 +5,7 @@ type EventRow={id:number;created_at:string;event_type:string;severity:string;per
 type Status={running:boolean;source:string|null;message:string;fps:number;processed:number};
 type ZoneName='checkout'|'exit'|'restricted';
 type Zones=Record<ZoneName,number[][]>;
-const API='';
+const API='https://sentinel-ai-backend-k9to.onrender.com';
 async function json<T>(url:string, init?:RequestInit):Promise<T>{const r=await fetch(API+url,init);if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||`Request failed (${r.status})`);}return r.json();}
 export default function App(){
  const [status,setStatus]=useState<Status>({running:false,source:null,message:'Connecting…',fps:0,processed:0});
