@@ -1,5 +1,11 @@
 # Sentinel AI — Dual-Mode Smart Anti-Theft & Home Security System
 
+## Live Demo
+
+- **Live Web Application:** https://sentinel-ai-theft-detection-project.onrender.com
+- **Live Backend API Health Check:** https://sentinel-ai-backend-k9to.onrender.com/api/health
+- **How to Test Online:** Open the Live Web Application link above, upload a sample CCTV clip (MP4/AVI/MOV/MKV) under **Video analysis**, and click **Analyse uploaded video** to view detections and review alerts. *(Note: On Render's free tier, services sleep after 15 minutes of inactivity—allow 30–60 seconds on the first visit for the backend to wake up. Real-time laptop webcam monitoring runs locally via `setup-windows.bat` and `start-all.bat`.)*
+
 A local-first prototype for a **retail store/supermarket** and **home residence** using a laptop webcam. It retains the project's core stack: Python, YOLOv8, ByteTrack, MediaPipe, OpenCV, Flask, React, TypeScript and SQLite.
 
 > **Safety and accuracy:** This application raises review alerts, not conclusions. A person entering a zone, carrying an object, or appearing on camera is not proof of theft or trespass. False alerts are expected. A human must review the original footage and context. Do not use this system for automatic accusations, detention, or emergency response.
