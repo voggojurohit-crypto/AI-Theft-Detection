@@ -77,6 +77,7 @@ stop_event = threading.Event()
 last_alert_by_track = {}
 track_checkout_seen = set()
 pose_estimator = None
+browser_frame_lock = threading.Lock()
 
 
 @contextmanager
@@ -359,6 +360,66 @@ def start_camera():
 def stop_camera():
     stop_event.set()
     return jsonify({"ok":True,"message":"Stop requested"})
+
+@app.post("/api/browser/start")
+def start_browser_camera():
+    payload = request.get_json(silent=True) or {}
+    if payload.get("profile") in ("retail", "home"):
+        config["profile"] = payload["profile"]
+    if "armed" in payload:
+        config["armed"] = bool(payload["armed"])
+    CONFIG_PATH.write_text(json.dumps(config, indent=2), encoding="utf-8")
+    with state_lock:
+        if state["running"] and state.get("source") != "browser-webcam":
+            return jsonify({"ok": False, "error": "Another camera or video source is already running"}), 409
+        state.update(running=True, source="browser-webcam", message="Browser webcam connected; waiting for frames", fps=0.0)
+    stop_event.clear()
+    track_checkout_seen.clear()
+    last_alert_by_track.clear()
+    return jsonify({"ok": True, "message": "Browser webcam session started"})
+
+@app.post("/api/browser/stop")
+def stop_browser_camera():
+    with state_lock:
+        if state.get("source") == "browser-webcam":
+            state.update(running=False, source=None, message="Browser webcam monitoring stopped", fps=0.0)
+            state["last_frame"] = None
+    return jsonify({"ok": True, "message": "Browser webcam stopped"})
+
+@app.post("/api/frame")
+def process_browser_frame():
+    if "frame" not in request.files:
+        return jsonify({"ok": False, "error": "No webcam frame received"}), 400
+    with state_lock:
+        if not state["running"] or state.get("source") != "browser-webcam":
+            return jsonify({"ok": False, "error": "Browser webcam session is not active"}), 409
+    if not browser_frame_lock.acquire(blocking=False):
+        return jsonify({"ok": False, "error": "Previous frame is still being processed"}), 429
+    started = time.time()
+    try:
+        raw = request.files["frame"].read()
+        array = np.frombuffer(raw, dtype=np.uint8)
+        frame = cv2.imdecode(array, cv2.IMREAD_COLOR)
+        if frame is None:
+            return jsonify({"ok": False, "error": "Could not decode webcam frame"}), 400
+        annotated = analyse_frame(frame, source="browser-webcam", tracker=True)
+        elapsed = max(time.time() - started, 0.001)
+        cv2.putText(annotated, f"AI {1/elapsed:.1f} FPS", (12, 28), cv2.FONT_HERSHEY_SIMPLEX, .7, (255,255,255), 2)
+        ok, encoded = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
+        if not ok:
+            return jsonify({"ok": False, "error": "Could not encode annotated frame"}), 500
+        with state_lock:
+            state["last_frame"] = annotated
+            state["fps"] = round(1/elapsed, 1)
+            state["source"] = "browser-webcam"
+            state["message"] = "Browser webcam AI processing active"
+        return Response(encoded.tobytes(), mimetype="image/jpeg", headers={"Cache-Control": "no-store"})
+    except Exception as exc:
+        with state_lock:
+            state["message"] = f"AI processing error: {exc}"
+        return jsonify({"ok": False, "error": str(exc)}), 500
+    finally:
+        browser_frame_lock.release()
 
 @app.get("/api/video_feed")
 def video_feed():
