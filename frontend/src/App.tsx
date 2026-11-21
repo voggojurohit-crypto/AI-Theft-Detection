@@ -79,7 +79,7 @@ export default function App() {
 
   useEffect(() => {
     refresh();
-    const t = setInterval(refresh, 7000);
+    const t = setInterval(refresh, 25000);
     return () => clearInterval(t);
   }, []);
 
@@ -143,7 +143,7 @@ export default function App() {
           }
           if (response.status === 429 || response.status === 502 || response.status === 503 || response.status === 504) {
             if (!cancelled) setMessage('AI server is waking up or busy. Retrying frame…');
-            await wait(2200);
+            await wait(10000);
             continue;
           }
           if (!response.ok) {
@@ -166,7 +166,7 @@ export default function App() {
           frameBusyRef.current = false;
           if (frameAbortRef.current === controller) frameAbortRef.current = null;
         }
-        await wait(1400);
+        await wait(3000);
       }
     };
 
