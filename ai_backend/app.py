@@ -65,7 +65,18 @@ def load_config():
 
 config = load_config()
 app = Flask(__name__)
-CORS(app)
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "https://sentinel-ai-theft-detection-project.onrender.com"
+            ]
+        }
+    },
+    methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type"]
+)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
 
 state = {"running": False, "source": None, "message": "Ready", "last_frame": None, "fps": 0.0, "processed": 0}
