@@ -424,11 +424,12 @@ export default function App() {
                 <div className={'video-wrap ' + (calibrating ? 'calibrating' : '')} onClick={addCalibrationPoint}>
                   {status.running ? (
                     <>
-                      <video ref={videoRef} className="camera-source-hidden" muted playsInline />
+                      <video ref={videoRef} autoPlay muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }} />
+                      
                       <canvas ref={canvasRef} className="camera-source-hidden" />
                       {browserCamera ? (
                         annotatedFrame ? (
-                          <img src={annotatedFrame} alt="Live AI-annotated laptop webcam feed" />
+                          <img src={annotatedFrame} alt="Live AI-annotated laptop webcam feed" style={{ position: 'relative', zIndex: 2 }} />
                         ) : (
                           <div className="video-placeholder">
                             <div className="camera-orb"><Video size={30} /></div>
