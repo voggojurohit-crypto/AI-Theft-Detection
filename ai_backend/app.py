@@ -554,7 +554,7 @@ def process_browser_frame():
             source="browser-webcam",
             tracker=True,
             use_pose=False,
-            imgsz=416   
+            imgsz=320
         )
         elapsed = max(time.time() - started, 0.001)
         cv2.putText(annotated, f"AI {1 / elapsed:.1f} FPS", (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
