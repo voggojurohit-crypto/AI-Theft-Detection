@@ -2,8 +2,8 @@
   "model": "yolov8n.pt",
   "confidence": 0.35,
   "camera_index": 0,
-  "profile": "home",
-  "armed": false,
+  "profile": "retail",
+  "armed": true,
   "frame_width": 960,
   "portable_classes": [
     "backpack",
@@ -18,20 +18,24 @@
   "zones": {
     "checkout": [
       [
-        0.35,
-        0.55
+        0.0301,
+        0.5301
       ],
       [
-        0.7,
-        0.55
+        0.2127,
+        0.5204
       ],
       [
-        0.7,
-        0.98
+        0.2075,
+        0.8785
       ],
       [
-        0.35,
-        0.98
+        0.0354,
+        0.8688
+      ],
+      [
+        0.0301,
+        0.5688
       ]
     ],
     "exit": [

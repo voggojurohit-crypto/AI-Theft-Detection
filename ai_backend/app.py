@@ -201,7 +201,7 @@ def save_event(frame, person_id, obj_id, label, conf, source, reason, event_type
         )
 
 
-def analyse_frame(frame, source="camera", tracker=True):
+def analyse_frame(frame, source="camera", tracker=True, use_pose=True, imgsz=416):
     """Detect and track people/items, draw overlays, and raise conservative review events."""
     with config_lock:
         max_w = int(config.get("frame_width", 960))
@@ -222,10 +222,27 @@ def analyse_frame(frame, source="camera", tracker=True):
         h, w = frame.shape[:2]
     annotated = frame.copy()
     yolo = get_model()
+
     results = (
-        yolo.track(frame, persist=tracker, tracker="bytetrack.yaml", conf=conf_thresh, verbose=False, imgsz=640)
+        yolo.track(
+            frame,
+            persist=tracker,
+            tracker="bytetrack.yaml",
+            conf=conf_thresh,
+            verbose=False,
+            imgsz=imgsz,
+            device="cpu",
+            max_det=30
+        )
         if tracker
-        else yolo(frame, conf=conf_thresh, verbose=False)
+        else yolo.predict(
+            frame,
+            conf=conf_thresh,
+            verbose=False,
+            imgsz=imgsz,
+            device="cpu",
+            max_det=30
+        )
     )
     people, items = [], []
     names = yolo.names
@@ -245,7 +262,7 @@ def analyse_frame(frame, source="camera", tracker=True):
             elif label in portable_classes:
                 items.append(row)
 
-    pose = get_pose()
+    pose = get_pose() if use_pose else None
     if pose and people:
         try:
             p = max(people, key=lambda x: (x["box"][2] - x["box"][0]) * (x["box"][3] - x["box"][1]))
@@ -532,7 +549,13 @@ def process_browser_frame():
         if frame is None:
             return jsonify({"ok": False, "error": "Could not decode webcam frame"}), 400
 
-        annotated = analyse_frame(frame, source="browser-webcam", tracker=True)
+        annotated = analyse_frame(
+            frame,
+            source="browser-webcam",
+            tracker=True,
+            use_pose=False,
+            imgsz=416   
+        )
         elapsed = max(time.time() - started, 0.001)
         cv2.putText(annotated, f"AI {1 / elapsed:.1f} FPS", (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         ok, encoded = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 78])
